@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Kuro
+Comment=Kuro desktop recorder
+Exec=kuro
+Icon=app.trykuro.Kuro
+Terminal=false
+Categories=Utility;
+StartupNotify=true

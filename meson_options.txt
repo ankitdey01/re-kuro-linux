@@ -1,0 +1,5 @@
+option('linux_demo',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the local demo backend instead of the unavailable production services',
+)

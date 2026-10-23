@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'" />
+<title>Kuro</title>
+<link rel="stylesheet" href="./colors_and_type.css" />
+<link rel="stylesheet" href="./styles.css" />
+
+<style>
+/* ─── solo (no-sidebar) layout shared by every onboarding/error state ─── */
+
+.window.solo { grid-template-columns: 1fr; }
+.window.solo .main { background: var(--ts-surface); }
+
+.solo-pane {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 44px;
+    text-align: center;
+}
+.solo-mark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 40px;
+    letter-spacing: -0.02em;
+    color: var(--ts-ink);
+    line-height: 1;
+    margin-bottom: 22px;
+}
+.solo-headline {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--ts-ink);
+    margin: 0 0 10px;
+    max-width: 360px;
+}
+.solo-sub {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: color-mix(in srgb, var(--ts-ink) 60%, transparent);
+    margin: 0 0 22px;
+    max-width: 320px;
+}
+.solo-sub strong { color: var(--ts-ink); font-weight: 600; }
+
+.solo-actions { display: flex; gap: 10px; align-items: center; }
+
+/* Google sign-in CTA */
+.google-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 38px;
+    padding: 0 18px;
+    background: var(--ts-ink);
+    border: 1px solid var(--ts-ink);
+    color: var(--ts-on-ink);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    cursor: pointer;
+    transition: background 120ms;
+    white-space: nowrap;
+}
+.google-cta:hover { background: #1a1a1a; }
+[data-theme="dark"] .google-cta:hover { background: color-mix(in srgb, var(--ts-ink) 88%, transparent); }
+.google-cta svg { background: #fff; border-radius: 999px; padding: 2px; box-sizing: content-box; width: 14px; height: 14px; } /* Google logo chip — fixed white in both themes */
+
+/* inline error pill below CTA */
+.inline-err {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 11px;
+    background: color-mix(in srgb, var(--status-bad) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--status-bad) 30%, transparent);
+    color: var(--status-bad);
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    line-height: 1.3;
+}
+.inline-err svg { width: 13px; height: 13px; stroke-width: 1.8; flex: 0 0 auto; }
+
+/* spinner */
+.spinner {
+    width: 28px; height: 28px;
+    border: 2px solid color-mix(in srgb, var(--ts-ink) 10%, transparent);
+    border-top-color: var(--ts-ink);
+    border-radius: 999px;
+    animation: spin 800ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-top-color: color-mix(in srgb, var(--ts-ink) 40%, transparent); } }
+
+/* step strip (onboarding) */
+.step-strip {
+    position: absolute;
+    top: 14px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    z-index: 2;
+}
+.step-strip span {
+    width: 22px;
+    height: 2px;
+    background: color-mix(in srgb, var(--ts-ink) 12%, transparent);
+}
+.step-strip span.done { background: color-mix(in srgb, var(--ts-ink) 50%, transparent); }
+.step-strip span.active { background: var(--ts-ink); }
+
+/* state icon block */
+.state-icon {
+    width: 48px; height: 48px;
+    display: grid; place-items: center;
+    margin-bottom: 18px;
+    border: 1px solid;
+}
+.state-icon svg { width: 22px; height: 22px; }
+.state-icon.bad {
+    border-color: color-mix(in srgb, var(--status-bad) 40%, transparent);
+    background: color-mix(in srgb, var(--status-bad) 6%, transparent);
+    color: var(--status-bad);
+}
+.state-icon.warn {
+    border-color: color-mix(in srgb, var(--status-warn) 35%, transparent);
+    background: color-mix(in srgb, var(--status-warn) 6%, transparent);
+    color: var(--status-warn);
+}
+.state-icon.good {
+    border-color: color-mix(in srgb, var(--status-good) 35%, transparent);
+    background: color-mix(in srgb, var(--status-good) 6%, transparent);
+    color: var(--status-good);
+}
+.state-icon.ink {
+    border-color: var(--ts-ink);
+    background: var(--ts-ink);
+    color: var(--ts-on-ink);
+}
+.state-icon.outline {
+    border-color: var(--ts-hairline);
+    background: var(--ts-surface);
+    color: var(--ts-ink);
+}
+
+.solo-disclose {
+    margin-top: 14px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: color-mix(in srgb, var(--ts-ink) 45%, transparent);
+    line-height: 1.5;
+    max-width: 280px;
+}
+.solo-disclose a {
+    color: var(--ts-ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in srgb, var(--ts-ink) 30%, transparent);
+}
+.solo-disclose a:hover { color: var(--ts-purple); text-decoration-color: var(--ts-purple); }
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     SOLO SCREEN — shown for onboarding, auth errors, hard blocks
+     ================================================================ -->
+<section id="soloScreen" class="window solo is-windows" style="display:none;">
+    <section class="main">
+        <div class="step-strip" id="stepStrip" style="display:none;">
+            <span id="step1"></span>
+            <span id="step2"></span>
+            <span id="step3"></span>
+        </div>
+        <div class="titlebar" data-window-drag-region>
+            <button class="close-button" id="soloClose" type="button" aria-label="Close"></button>
+        </div>
+        <div id="soloContent" class="solo-pane">
+            <!-- Dynamically rendered by app.js -->
+        </div>
+    </section>
+</section>
+
+<!-- ================================================================
+     DASHBOARD — shown when signed in + onboarding complete
+     ================================================================ -->
+<section id="dashboard" class="window" style="display:none;" data-recording="active">
+
+    <!-- ============================================================
+         Sidebar
+         ============================================================ -->
+    <aside class="sidebar" data-window-drag-region>
+
+        <div class="brand">
+            <span class="wm">kuro</span>
+            <span class="rec-pill" id="recPill">
+                <span class="dot"></span>
+                <span id="recPillLabel"></span>
+            </span>
+        </div>
+
+        <div class="brand-divider"></div>
+
+        <nav class="nav-block" aria-label="Kuro">
+            <button class="side-tab active" data-view="account" type="button" aria-current="page" aria-controls="accountView">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"></path>
+                </svg>
+                <span>Account</span>
+                <span class="badge-dot"></span>
+            </button>
+
+            <button class="side-tab" data-view="earnings" type="button" aria-controls="earningsView">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 4h12"></path>
+                    <path d="M6 8h12"></path>
+                    <path d="M6 4c6 0 8 2.5 8 5s-2 5-6 5l6 6"></path>
+                </svg>
+                <span>Payouts</span>
+                <span class="badge-dot"></span>
+            </button>
+
+            <button class="side-tab" data-view="referrals" type="button" id="referralsTab" aria-controls="referralsView">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="4" y="8" width="16" height="4"></rect>
+                    <path d="M6 12v8h12v-8"></path>
+                    <path d="M12 8v12"></path>
+                    <path d="M12 8c-4 0-5-4-2.5-4S12 8 12 8zm0 0c4 0 5-4 2.5-4S12 8 12 8z"></path>
+                </svg>
+                <span>Referrals</span>
+                <span class="badge-dot"></span>
+            </button>
+
+            <button class="side-tab" data-view="permissions" type="button" id="permTab" aria-controls="permissionsView">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6l-8-4z"></path>
+                    <path d="m9 12 2 2 4-4"></path>
+                </svg>
+                <span>Permissions</span>
+                <span class="badge-dot"></span>
+            </button>
+        </nav>
+
+        <div></div>
+
+        <div class="side-footer">
+            <button class="side-tab utility" id="btnFaq" type="button" title="Opens trykuro.app/faq in your browser">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M9.2 9.2a2.8 2.8 0 0 1 5.44.93c0 1.87-2.8 2.8-2.8 2.8"></path>
+                    <path d="M12 16.6h.01"></path>
+                </svg>
+                <span>FAQ</span>
+            </button>
+            <button class="side-tab utility" id="btnCheckUpdates" type="button">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-7-3.5"></path>
+                    <path d="M3 21v-5h5"></path>
+                    <path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 7 3.5"></path>
+                    <path d="M21 3v5h-5"></path>
+                </svg>
+                <span>Check updates</span>
+            </button>
+            <button class="side-tab utility" type="button" id="themeToggle" aria-label="Switch to dark mode">
+                <span class="t-ic">
+                    <svg class="icon t-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+                    <svg class="icon t-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.9 4.9 1.4 1.4"></path><path d="m17.7 17.7 1.4 1.4"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.3 17.7-1.4 1.4"></path><path d="m19.1 4.9-1.4 1.4"></path></svg>
+                </span>
+                <span id="themeLabel">Dark mode</span>
+            </button>
+            <button class="side-tab utility" id="btnQuit" type="button">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3v9"></path>
+                    <path d="M18.4 7.6a8 8 0 1 1-12.8 0"></path>
+                </svg>
+                <span>Quit Kuro</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ============================================================
+         Main pane
+         ============================================================ -->
+    <section class="main">
+
+        <div class="titlebar" data-window-drag-region>
+            <button class="close-button" id="dashClose" type="button" aria-label="Close"></button>
+        </div>
+
+        <div class="inline-err command-error" id="dashboardError" role="alert" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+            <span id="dashboardErrorText"></span>
+        </div>
+
+        <div class="view-wrap">
+
+            <!-- ============= ACCOUNT ============================== -->
+            <section class="view no-scroll active" id="accountView">
+
+                <header class="page-head">
+                    <div>
+                        <span class="eyebrow">Signed in</span>
+                        <h1>Account</h1>
+                    </div>
+                </header>
+
+                <div class="bulletin-slot" data-placement="account"></div>
+
+                <!-- category earning rates (collapsible strip) -->
+                <section class="card rates-strip" id="ratesStrip" hidden>
+                    <button class="rates-toggle" id="ratesToggle" type="button" aria-expanded="false" aria-controls="ratesPanel">
+                        <svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.6a2 2 0 0 0 1.3 1.3L21 12l-5.8 2.1a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.6a2 2 0 0 0-1.3-1.3L3 12l5.8-2.1a2 2 0 0 0 1.3-1.3L12 3z"></path></svg>
+                        <span>Introducing Higher Earning Rates</span>
+                        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+                    <div class="rates-panel" id="ratesPanel" hidden>
+                        <p>We pay higher rates for productive workflows. Your rate is detected and applied automatically.</p>
+                        <div class="rates-grid" id="ratesGrid"></div>
+                    </div>
+                </section>
+
+                <!-- identity card -->
+                <section class="card loaded-only">
+                    <div class="identity-row">
+                        <div class="crest" id="userCrest" aria-hidden="true"></div>
+                        <div class="identity-copy">
+                            <strong id="userName"></strong>
+                            <span id="userEmail"></span>
+                        </div>
+                        <button class="btn danger" id="btnSignOut" type="button">Sign out</button>
+                    </div>
+                    <div class="account-meta">
+                        <div>
+                            <span class="label">Device</span>
+                            <span class="val">Linux</span>
+                        </div>
+                        <div>
+                            <span class="label">Version</span>
+                            <span class="val" id="metaVersion"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- recording card -->
+                <section class="card recording-card loaded-only">
+                    <div class="rec-glyph">
+                        <span class="core"></span>
+                    </div>
+                    <div class="rec-copy" aria-live="polite">
+                        <h2 id="recCardTitle"></h2>
+                        <span class="label" id="recCardLabel"></span>
+                    </div>
+                    <button class="btn-primary" id="recordingButton" type="button"></button>
+                    <span class="state-badge" id="recordingStateBadge"></span>
+                </section>
+
+                <section class="update-card loaded-only" id="updateStatus" hidden>
+                    <div class="update-icon" id="updateStatusIcon" aria-hidden="true"></div>
+                    <div class="update-copy">
+                        <strong id="updateStatusTitle"></strong>
+                        <span id="updateStatusCopy"></span>
+                    </div>
+                    <button class="btn-primary update-install" id="btnInstallUpdate" type="button">Restart</button>
+                </section>
+
+            </section>
+
+            <!-- ============= EARNINGS (PAYOUTS) ================== -->
+            <section class="view scroll" id="earningsView">
+
+                <header class="page-head">
+                    <div>
+                        <span class="eyebrow">Revenue</span>
+                        <h1>Payouts</h1>
+                    </div>
+                </header>
+
+                <div class="bulletin-slot" data-placement="earnings"></div>
+
+                <!-- summary — icon + mono label + big value -->
+                <div class="sumrow">
+                    <section class="card sum-card">
+                        <div class="sum-label">
+                            <svg class="sicon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="1"></rect><path d="M3 10h18"></path><path d="M16 14.5h.01"></path></svg>
+                            <span>Balance</span>
+                            <span class="mini-tag bad" id="balCapTag" hidden>Cap reached</span>
+                        </div>
+                        <span class="sum-value good" id="balanceValue">—</span>
+                    </section>
+                    <section class="card sum-card">
+                        <div class="sum-label">
+                            <svg class="sicon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                            <span>Active Hours Uploaded</span>
+                        </div>
+                        <span class="sum-value" id="hoursValue">—</span>
+                    </section>
+                    <section class="card sum-card">
+                        <div class="sum-label">
+                            <svg class="sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12"></path><path d="M6 8h12"></path><path d="M6 4c6 0 8 2.5 8 5s-2 5-6 5l6 6"></path></svg>
+                            <span>Total Paid</span>
+                        </div>
+                        <span class="sum-value accent" id="paidValue">—</span>
+                    </section>
+                </div>
+
+                <!-- earnings cap meter -->
+                <section class="card cap-panel" id="capPanel" hidden>
+                    <div class="cap-head">
+                        <span class="cap-label">Earnings cap</span>
+                        <span class="cap-nums" id="capNums"></span>
+                    </div>
+                    <div class="cap-track"><div class="cap-fill" id="capFill"></div></div>
+                    <p class="cap-alert" id="capAlert" hidden>You've reached your current earnings limit.</p>
+                </section>
+
+                <!-- payout -->
+                <section class="card payout-panel">
+                    <div class="pay-head">
+                        <div>
+                            <h2>Payout.</h2>
+                            <span class="pay-sub" id="paySub">Request a payout.</span>
+                        </div>
+                        <span class="pay-stats" id="payStats"></span>
+                    </div>
+                    <div class="pay-body" id="payBody"></div>
+                </section>
+
+                <!-- history -->
+                <section class="card hist-panel">
+                    <div class="hist-head">
+                        <div class="range-toggle" id="histTabs" role="tablist" aria-label="History">
+                            <button class="active" data-tab="recordings" type="button">Recordings</button>
+                            <button data-tab="transactions" type="button">Transactions</button>
+                        </div>
+                        <div class="pager" id="histPager">
+                            <button id="pagerPrev" type="button" aria-label="Previous page">
+                                <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>
+                            </button>
+                            <span id="pagerLabel">01 / 01</span>
+                            <button id="pagerNext" type="button" aria-label="Next page">
+                                <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="histList"></div>
+                </section>
+
+            </section>
+
+            <!-- ============= REFERRALS ============================ -->
+            <section class="view scroll" id="referralsView">
+
+                <header class="page-head">
+                    <div>
+                        <span class="eyebrow">Invite</span>
+                        <h1>Referrals</h1>
+                        <p class="sub" id="refTerms"></p>
+                    </div>
+                    <span class="cap-pill" id="refCapPill" hidden></span>
+                </header>
+
+                <div class="bulletin-slot" data-placement="referrals"></div>
+
+                <!-- link card -->
+                <section class="card ref-link-card" id="refLinkRow">
+                    <span class="b-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"></path>
+                            <path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"></path>
+                        </svg>
+                    </span>
+                    <span class="link" id="refLink"></span>
+                    <button class="btn-copy" id="btnCopyRef" type="button">Copy link</button>
+                </section>
+
+                <div class="flash bad" id="refCapNote" hidden>
+                    <p>You've reached your referral limit. Credited bonuses stay in your balance.</p>
+                </div>
+
+                <!-- referral list -->
+                <section class="card ref-panel">
+                    <div class="hist-head">
+                        <div class="panel-head" style="margin-bottom: 0;">
+                            <span class="lbl" id="refListLbl">Referrals</span>
+                        </div>
+                        <span class="panel-head" style="margin-bottom: 0;"><span class="meta" id="refEarnedMeta"></span></span>
+                    </div>
+                    <div id="refList"></div>
+                </section>
+
+            </section>
+
+            <!-- ============= PERMISSIONS ========================== -->
+            <section class="view no-scroll" id="permissionsView">
+
+                <header class="page-head">
+                    <div>
+                        <span class="eyebrow">System access</span>
+                        <h1>Permissions</h1>
+                        <p class="sub" id="permSub"></p>
+                    </div>
+                </header>
+
+                <section class="card perm-card loaded-only">
+
+                    <div class="permission-row">
+                        <span class="perm-icon granted">
+                            <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="12" rx="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path></svg>
+                        </span>
+                        <div class="copy">
+                            <strong>Screen capture</strong>
+                            <span>Required to capture your screen.</span>
+                        </div>
+                        <div class="control">
+                            <span class="perm-status granted">Granted</span>
+                        </div>
+                    </div>
+
+                    <div class="permission-row">
+                        <span class="perm-icon granted">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M6 4v6"></path><path d="M10 4v12"></path><path d="M14 4v8"></path><path d="M18 4v10"></path><path d="M6 20h12"></path></svg>
+                        </span>
+                        <div class="copy">
+                            <strong>Input monitoring</strong>
+                            <span>Required to record keyboard and mouse activity.</span>
+                        </div>
+                        <div class="control">
+                            <span class="perm-status granted">Granted</span>
+                        </div>
+                    </div>
+
+                    <div class="permission-row">
+                        <span class="perm-icon" id="startupIcon">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v9"></path><path d="M18.4 7.6a8 8 0 1 1-12.8 0"></path></svg>
+                        </span>
+                        <div class="copy">
+                            <strong>Launch at startup</strong>
+                            <span id="startupCopy"></span>
+                        </div>
+                        <div class="control">
+                            <div class="toggle-seg" id="startupSeg" role="group" aria-label="Launch at startup">
+                                <button data-val="true"  type="button">On</button>
+                                <button data-val="false" type="button">Off</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+            </section>
+
+        </div>
+    </section>
+
+    <!-- ============= PAYOUT DIALOG ============================
+         Direct child of the window so the scrim dims the WHOLE app
+         (sidebar included) while the modal is open. -->
+    <div class="scrim" id="payoutScrim" hidden>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="payoutDialogTitle">
+            <header class="d-head">
+                <span class="eyebrow" id="dlgEyebrow">UPI payout</span>
+                <h2 id="payoutDialogTitle">Confirm payout.</h2>
+            </header>
+            <div class="d-body">
+                <div class="confirm-dest">
+                    <span class="to">Sending</span>
+                    <strong class="amt" id="dlgConfirmAmount"></strong>
+                    <span class="to" id="dlgConfirmTo">to</span>
+                    <span class="upi" id="dlgConfirmUpi"></span>
+                </div>
+                <div class="warn-strip">
+                    <svg viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3z"></path><path d="M12 10v4"></path><path d="M12 17.5h.01"></path></svg>
+                    <span id="dlgWarnCopy">This can't be undone. A wrong UPI ID means a lost payout.</span>
+                </div>
+                <p class="field-err" id="dlgConfirmErr" hidden></p>
+            </div>
+            <footer class="d-foot">
+                <button class="btn sm" id="btnPayBack" type="button">Cancel</button>
+                <button class="btn-primary sm" id="btnPayConfirm" type="button">Confirm payout</button>
+            </footer>
+        </div>
+    </div>
+</section>
+
+<script src="linux-bridge.js"></script>
+<script src="communications.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

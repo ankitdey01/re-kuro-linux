@@ -1,0 +1,18 @@
+app-id: app.trykuro.Kuro
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
+command: kuro
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --filesystem=xdg-config/kuro:create
+  - --filesystem=xdg-data/kuro:create
+modules:
+  - name: kuro
+    buildsystem: meson
+    builddir: true
+    sources:
+      - type: dir
+        path: ..

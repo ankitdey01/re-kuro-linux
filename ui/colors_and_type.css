@@ -1,0 +1,274 @@
+/* =========================================================================
+   Kuro design system — colors, type, fonts
+   ----------------------------------------------------------------------
+   Sourced from web/app/globals.css, web/lib/classify.ts, the landing
+   marketing palette, and the mac onboarding UI. Use these vars whenever
+   you build a Kuro artifact so the visual language stays consistent.
+   ========================================================================= */
+
+/* ---------- Font faces ----------
+   Outfit  → wordmark only ("kuro" lowercase)
+   Satoshi → display + body
+   Geist Mono → eyebrows, code, tabular numerics
+   Avenir Next → fallback for the square `S` app-icon glyph (mac/favicon)
+*/
+@font-face {
+    font-family: "Outfit Variable";
+    src: url("./fonts/Outfit-Variable.ttf") format("truetype-variations");
+    font-weight: 100 900;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Satoshi Variable";
+    src: url("./fonts/Satoshi-Variable.ttf") format("truetype-variations");
+    font-weight: 300 900;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Geist Mono";
+    src: url("./fonts/GeistMono-Variable.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+:root {
+    /* =========================================================
+       Type families
+       ========================================================= */
+    --font-display: "Outfit Variable", "Outfit", system-ui, sans-serif;
+    --font-sans: "Satoshi Variable", "Satoshi", -apple-system,
+        BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace,
+        SFMono-Regular, Menlo, monospace;
+    --font-mac: "Avenir Next", "Avenir", "Nunito Sans", "Helvetica Neue",
+        system-ui, sans-serif;
+
+    /* =========================================================
+       Type scale (marketing / dashboard mix)
+       ========================================================= */
+    --text-h1: clamp(2rem, 5vw, 4.5rem); /* hero — Satoshi bold */
+    --text-h2: clamp(1.75rem, 3.5vw, 3rem); /* section — Satoshi bold */
+    --text-h3: 1.5rem; /* card title */
+    --text-h4: 1.125rem; /* sub-section */
+    --text-body-lg: 1.125rem; /* hero subtitle */
+    --text-body: 0.9375rem;
+    --text-sm: 0.8125rem;
+    --text-xs: 0.6875rem; /* eyebrows in geist mono */
+    --text-meta: 0.625rem; /* dashboard micro labels */
+
+    --leading-tight: 1.05; /* display headlines */
+    --leading-snug: 1.3; /* body intros */
+    --leading-relaxed: 1.55; /* paragraph */
+
+    --tracking-display: -0.02em;
+    --tracking-eyebrow: 0.15em; /* monospace uppercase tags */
+    --tracking-button: 0.08em; /* monospace uppercase CTAs */
+
+    /* =========================================================
+       Brand colors — primary
+       The wordmark and brand surfaces are near-black; purple is the
+       single hover/accent color used sparingly.
+       ========================================================= */
+    --brand-ink: #0a0a0a; /* logo background, primary buttons */
+    --brand-ink-soft: oklch(0.145 0 0); /* dashboard foreground */
+    --brand-paper: #f5f5f5; /* light surface (mac sidebar tint) */
+    --brand-paper-warm: #fafaf9;
+    --brand-purple: #9333ea; /* accent (Tailwind purple-600) */
+    --brand-purple-hover: #7e22ce;
+    --brand-purple-soft: rgba(147, 51, 234, 0.25);
+
+    /* =========================================================
+       Neutral scale (mirrors gray-900/15 alphas used in landing)
+       ========================================================= */
+    --gray-900: #0a0a0a;
+    --gray-700: rgba(10, 10, 10, 0.7);
+    --gray-600: rgba(10, 10, 10, 0.6); /* body text on white */
+    --gray-500: rgba(10, 10, 10, 0.5);
+    --gray-400: rgba(10, 10, 10, 0.4);
+    --gray-300: rgba(10, 10, 10, 0.15); /* primary border */
+    --gray-200: rgba(10, 10, 10, 0.1);
+    --gray-100: rgba(10, 10, 10, 0.05); /* bar-chart track */
+    --gray-50: #fafaf9;
+    --white: #ffffff;
+
+    /* Mac neutral surfaces (NSColor white-based) */
+    --mac-panel: #f6f6f6; /* white 0.965 */
+    --mac-tile: #f0f0f0; /* white 0.94  — permission row */
+    --mac-divider: #e0e0e0; /* white 0.88 */
+
+    /* =========================================================
+       Semantic foreground/background tokens (shadcn-style)
+       Light theme — these match the dashboard's oklch tokens.
+       ========================================================= */
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+
+    /* =========================================================
+       Status colors
+       ========================================================= */
+    --status-good: #16a34a;
+    --status-warn: #d97706;
+    --status-bad: #dc2626;
+    --status-info: #2563eb;
+    --traffic-red: #ff5f57; /* browser chrome dot */
+    --traffic-amber: #febc2e;
+    --traffic-green: #28c840;
+
+    /* =========================================================
+       Radii
+       Marketing surfaces use SHARP corners (border-radius: 0).
+       Dashboard uses shadcn's --radius (0.625rem); mac uses 10px.
+       ========================================================= */
+    --radius-none: 0;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.625rem; /* shadcn default */
+    --radius-xl: 0.75rem; /* dashboard cards */
+    --radius-full: 9999px;
+    --radius-mac: 10px; /* mac buttons + tiles */
+
+    /* =========================================================
+       Elevation
+       Marketing relies on a single dramatic shadow under the
+       dashboard preview; the rest is borders.
+       ========================================================= */
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-hero: 0 30px 80px -30px rgba(0, 0, 0, 0.25);
+    --shadow-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.18); /* dark-mode app icon ring */
+
+    /* =========================================================
+       Dotted line system (signature marketing motif)
+       Use as inline style/background to draw vertical or horizontal
+       guide rules.
+       ========================================================= */
+    --dotted-h: repeating-linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0.2) 0px,
+        rgba(0, 0, 0, 0.2) 4px,
+        transparent 4px,
+        transparent 8px
+    );
+    --dotted-v: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.2) 0px,
+        rgba(0, 0, 0, 0.2) 4px,
+        transparent 4px,
+        transparent 8px
+    );
+
+    /* =========================================================
+       Spacing (8-pt grid, but marketing breathes wider)
+       ========================================================= */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+    --space-20: 80px;
+    --space-28: 112px;
+}
+
+/* =========================================================
+   Semantic typography classes
+   Use these instead of bare font-family / size declarations.
+   ========================================================= */
+
+.kuro-wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-transform: lowercase;
+    color: var(--gray-900);
+}
+
+.kuro-h1 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: var(--text-h1);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--gray-900);
+    text-wrap: balance;
+}
+
+.kuro-h2 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: var(--text-h2);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+    color: var(--gray-900);
+    text-wrap: balance;
+}
+
+.kuro-h3 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: var(--text-h3);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--gray-900);
+}
+
+.kuro-body {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: var(--text-body);
+    line-height: var(--leading-relaxed);
+    color: var(--gray-600);
+}
+
+.kuro-body-lg {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: var(--text-body-lg);
+    line-height: var(--leading-snug);
+    color: var(--gray-600);
+}
+
+.kuro-eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--gray-500);
+}
+
+.kuro-button-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-button);
+}
+
+.kuro-mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   Base reset + body default
+   ========================================================= */
+html,
+body {
+    background: var(--white);
+    color: var(--gray-900);
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+}
